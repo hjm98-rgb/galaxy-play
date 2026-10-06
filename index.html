@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e14">
+<title>星域游戏平台 · GalaxyPlay</title>
+<style>
+:root{
+  --bg:#0b0e14; --bg2:#11151f; --panel:#141a28; --panel2:#1a2133;
+  --line:#232c42; --txt:#e6ecf7; --sub:#8b96ad;
+  --acc:#5b8cff; --acc2:#8f5bff; --grn:#34d399; --red:#f45b6b; --gold:#f5c04a;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  user-select:none;-webkit-user-select:none}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;background:none;color:inherit}
+input{font-family:inherit;outline:none;border:none;background:none;color:var(--txt)}
+.view{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden}
+.view.active{display:flex}
+.hidden{display:none!important}
+
+/* ---------- 启动画面 ---------- */
+#splash{background:radial-gradient(circle at 50% 40%,#16203a 0%,#0b0e14 70%);align-items:center;justify-content:center}
+.splash-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;animation:drift 9s ease-in-out infinite}
+.splash-orb.o1{width:46vmin;height:46vmin;background:radial-gradient(circle,#5b8cff,transparent 70%);top:8%;left:12%}
+.splash-orb.o2{width:38vmin;height:38vmin;background:radial-gradient(circle,#8f5bff,transparent 70%);bottom:12%;right:10%;animation-delay:-3s}
+.splash-orb.o3{width:26vmin;height:26vmin;background:radial-gradient(circle,#34d399,transparent 70%);top:55%;left:22%;animation-delay:-6s}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(3vmin,-3vmin)}}
+.splash-inner{position:relative;text-align:center;z-index:2}
+.logo-ring{width:96px;height:96px;margin:0 auto 18px;position:relative;display:flex;align-items:center;justify-content:center}
+.logo-ring svg{width:96px;height:96px;animation:spin 6s linear infinite}
+.logo-ring .core{position:absolute;width:52px;height:52px;border-radius:18px;
+  background:linear-gradient(135deg,#5b8cff,#8f5bff);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 34px rgba(91,140,255,.8);animation:pulse 1.8s ease-in-out infinite}
+.logo-ring .core span{color:#fff;font-size:30px;font-weight:900;font-style:italic;letter-spacing:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.splash-title{font-size:30px;font-weight:800;letter-spacing:6px;background:linear-gradient(90deg,#5b8cff,#8f5bff,#34d399);
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:fadeUp 1s ease-out}
+.splash-sub{color:var(--sub);font-size:13px;margin-top:10px;letter-spacing:3px;opacity:0;animation:fadeUp 1s .4s forwards}
+.splash-bar{width:180px;height:3px;background:#1c2438;border-radius:3px;margin:26px auto 0;overflow:hidden}
+.splash-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#5b8cff,#34d399);animation:load 1.6s .5s forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes load{to{width:100%}}
+
+/* ---------- 顶栏 ---------- */
+#topbar{display:flex;align-items:center;gap:12px;padding:10px 14px;height:60px;flex-shrink:0;
+  background:rgba(13,17,26,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);position:relative;z-index:5}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;letter-spacing:1px}
+.brand .b-logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#5b8cff,#8f5bff);
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-style:italic;color:#fff}
+.tabs{display:flex;gap:4px;flex:1;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:7px 14px;border-radius:18px;color:var(--sub);font-size:14px;font-weight:600;white-space:nowrap;transition:.2s}
+.tab.on{color:#fff;background:linear-gradient(135deg,rgba(91,140,255,.35),rgba(143,91,255,.25))}
+.avatar-btn{width:40px;height:40px;border-radius:50%;flex-shrink:0;overflow:hidden;position:relative;
+  border:2px solid rgba(91,140,255,.6);box-shadow:0 0 12px rgba(91,140,255,.4);background:#223}
+.avatar-btn img,.avatar-btn .no-av{width:100%;height:100%;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff}
+.avatar-btn .no-av{background:linear-gradient(135deg,#5b8cff,#8f5bff)}
+.avatar-btn .lvl{position:absolute;bottom:-2px;right:-2px;background:var(--gold);color:#1b1608;font-size:9px;font-weight:800;
+  border-radius:8px;padding:0 4px;line-height:14px}
+
+/* ---------- 内容区 ---------- */
+#content{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+#content::-webkit-scrollbar{width:6px}
+#content::-webkit-scrollbar-thumb{background:#2a3450;border-radius:3px}
+.section-title{font-size:15px;font-weight:800;margin:18px 4px 10px;display:flex;align-items:center;gap:8px}
+.section-title .more{margin-left:auto;font-size:12px;color:var(--sub);font-weight:500}
+
+/* 商店轮播 */
+.hero{position:relative;height:190px;border-radius:16px;overflow:hidden;cursor:pointer}
+.hero .bg{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1);transition:transform 6s linear}
+.hero:hover .bg{transform:scale(1.08)}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(6,9,15,.92));display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+.hero h2{font-size:20px;font-weight:800;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.hero p{font-size:12px;color:#c6d0e4;margin-top:4px}
+.hero .play{position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#34d399,#22c0a8);color:#06281f;
+  padding:8px 16px;border-radius:20px;font-weight:800;font-size:13px;box-shadow:0 4px 18px rgba(52,211,153,.4)}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.dot{width:6px;height:6px;border-radius:50%;background:#2a3450;transition:.3s}
+.dot.on{background:var(--acc);width:16px}
+
+/* 游戏卡 */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:.2s;position:relative}
+.gcard:active{transform:scale(.97)}
+.gcard .gthumb{position:relative;height:96px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.gthumb .gtxt{font-size:34px;font-weight:900;font-style:italic;color:rgba(255,255,255,.92);text-shadow:0 2px 14px rgba(0,0,0,.5)}
+.gthumb .badge{position:absolute;top:6px;left:6px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(10,13,20,.65);color:#dfe7f5}
+.gcard .ginfo{padding:9px 11px}
+.gcard .gname{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gcard .gmeta{font-size:11px;color:var(--sub);margin-top:3px;display:flex;justify-content:space-between}
+.gcard .wish{position:absolute;bottom:8px;right:8px;font-size:15px;background:rgba(10,13,20,.6);width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.gcard .wish.on{color:var(--red)}
+
+/* 横幅分类 */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:6px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--line);color:var(--sub);font-size:13px;white-space:nowrap;transition:.2s}
+.chip.on{color:#fff;background:linear-gradient(135deg,rgba(91,140,255,.4),rgba(143,91,255,.3));border-color:transparent}
+
+/* 玩家上架入口 */
+.upload-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(120deg,#16213a,#1d1733);border:1px dashed rgba(91,140,255,.4);
+  border-radius:14px;padding:14px;margin-bottom:8px;cursor:pointer}
+.upload-banner .ic{font-size:30px}
+.upload-banner b{font-size:14px}
+.upload-banner span{font-size:12px;color:var(--sub)}
+
+/* ---------- 登录页 ---------- */
+#login{background:radial-gradient(circle at 70% 20%,#16203a 0%,#0b0e14 60%);align-items:stretch}
+.login-scroll{flex:1;overflow-y:auto;padding:30px 24px;display:flex;flex-direction:column;justify-content:center}
+.login-card{max-width:360px;margin:0 auto;width:100%;background:rgba(20,26,40,.75);backdrop-filter:blur(16px);
+  border:1px solid var(--line);border-radius:20px;padding:26px 22px}
+.login-logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#5b8cff,#8f5bff);margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;font-style:italic;color:#fff}
+.login-title{text-align:center;font-size:19px;font-weight:800}
+.login-sub{text-align:center;color:var(--sub);font-size:12px;margin:6px 0 20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--sub);margin-bottom:6px;font-weight:600}
+.field .inp{display:flex;align-items:center;gap:8px;background:#0e1420;border:1px solid var(--line);border-radius:12px;padding:12px}
+.field .inp:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px rgba(91,140,255,.15)}
+.field .inp input{flex:1;font-size:15px;background:none;min-width:0}
+.field .inp .ic{font-size:16px;opacity:.7}
+.code-row{display:flex;gap:10px}
+.code-row .inp{flex:1}
+.btn-send{background:linear-gradient(135deg,#5b8cff,#8f5bff);color:#fff;border-radius:12px;padding:0 14px;font-weight:700;font-size:13px;white-space:nowrap}
+.btn-send:disabled{opacity:.5}
+.btn-primary{width:100%;background:linear-gradient(135deg,#34d399,#22c0a8);color:#06281f;font-size:16px;font-weight:800;
+  border-radius:12px;padding:13px;margin-top:6px;box-shadow:0 6px 20px rgba(52,211,153,.3)}
+.btn-ghost{width:100%;background:transparent;border:1px solid var(--line);color:var(--sub);font-size:13px;border-radius:12px;padding:11px;margin-top:10px}
+.login-hint{text-align:center;color:var(--sub);font-size:11px;margin-top:16px;line-height:1.7}
+.login-err{color:var(--red);font-size:12px;text-align:center;min-height:16px;margin-top:8px}
+.remember-line{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);margin:8px 0 2px}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:13px;margin-bottom:18px;cursor:pointer}
+/* 验证码弹层 */
+#codeModal{position:fixed;inset:0;background:rgba(5,8,14,.85);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#codeModal.show{display:flex}
+.modal{background:var(--panel2);border:1px solid var(--line);border-radius:18px;padding:24px;width:100%;max-width:340px;text-align:center;position:relative;animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+.modal h3{font-size:16px;font-weight:800;margin-bottom:8px}
+.modal p{font-size:12px;color:var(--sub);line-height:1.6}
+.code-display{font-size:34px;font-weight:900;letter-spacing:10px;color:var(--acc2);background:#0e1420;border:1px dashed var(--line);
+  border-radius:12px;padding:14px;margin:16px 0 6px;font-family:monospace}
+.modal .btn-primary{margin-top:14px}
+
+/* ---------- 游戏容器 ---------- */
+#gameView{background:#05070c}
+#gameHeader{display:flex;align-items:center;gap:10px;padding:8px 12px;height:52px;background:rgba(10,13,20,.92);flex-shrink:0;z-index:6}
+#gameHeader .back{font-size:20px;padding:6px;border-radius:8px}
+#gameHeader .gt{font-weight:700;font-size:14px;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gameCanvasWrap{flex:1;position:relative;background:#05070c}
+#gameCanvas{width:100%;height:100%;display:block;touch-action:none}
+
+/* ---------- 提交/审核 ---------- */
+.form-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
+.form-card label{display:block;font-size:12px;color:var(--sub);margin:12px 0 6px;font-weight:600}
+.form-card input[type=text],.form-card input[type=email],.form-card select,.form-card textarea{
+  width:100%;background:#0e1420;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:14px;color:var(--txt);resize:none}
+.status-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:14px}
+.st-pending{background:rgba(245,192,74,.15);color:var(--gold)}
+.st-approved{background:rgba(52,211,153,.15);color:var(--grn)}
+.st-rejected{background:rgba(244,91,107,.15);color:var(--red)}
+
+/* 评测/社区 */
+.review{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.review .rv-top{display:flex;align-items:center;gap:8px}
+.review .rv-user{font-weight:700;font-size:13px}
+.review .stars{color:var(--gold);font-size:13px}
+.review p{font-size:12px;color:#b9c4d8;margin-top:8px;line-height:1.6}
+.review .rv-game{font-size:11px;color:var(--acc);margin-left:auto}
+
+.avatar-pick{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.avatar-pick div{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;
+  background:#0e1420;border:2px solid var(--line);cursor:pointer}
+.avatar-pick div.on{border-color:var(--acc);box-shadow:0 0 0 3px rgba(91,140,255,.2)}
+
+/* 个人资料 */
+.profile-head{display:flex;align-items:center;gap:14px;padding:16px;background:linear-gradient(120deg,#16213a,#1d1733);border-radius:16px}
+.profile-av{width:66px;height:66px;border-radius:50%;overflow:hidden;border:2px solid var(--acc);flex-shrink:0}
+.profile-av img,.profile-av .no-av{width:100%;height:100%;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#fff}
+.profile-av .no-av{background:linear-gradient(135deg,#5b8cff,#8f5bff)}
+.xp-bar{height:8px;background:#0e1420;border-radius:6px;overflow:hidden;margin-top:8px}
+.xp-bar i{display:block;height:100%;background:linear-gradient(90deg,#5b8cff,#34d399);border-radius:6px;transition:width .6s}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:20px;font-weight:800}
+.stat span{font-size:11px;color:var(--sub)}
+.ach-item{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.ach-item .ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.ach-item.lock{opacity:.45;filter:grayscale(1)}
+.ach-item.lock .ic{background:#0e1420}
+.ach-item .ic{background:linear-gradient(135deg,rgba(91,140,255,.4),rgba(143,91,255,.3))}
+.ach-item b{font-size:13px}
+.ach-item span{font-size:11px;color:var(--sub)}
+.ach-item .pct{margin-left:auto;font-size:12px;font-weight:700;color:var(--gold)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);background:rgba(13,17,26,.95);border:1px solid var(--line);
+  padding:12px 22px;border-radius:14px;font-size:13px;font-weight:600;z-index:60;transition:.3s;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:86vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--sub)}
+.pill.on{color:#fff;background:linear-gradient(135deg,rgba(91,140,255,.4),rgba(143,91,255,.3));border-color:transparent}
+.friend-item{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px}
+.friend-item .fav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:#0e1420}
+.friend-item .st{font-size:11px;color:var(--grn)}
+.empty{text-align:center;color:var(--sub);font-size:13px;padding:26px 0}
+</style>
+</head>
+<body>
+
+<!-- ========== 启动画面 ========== -->
+<div class="view active" id="splash">
+  <div class="splash-orb o1"></div><div class="splash-orb o2"></div><div class="splash-orb o3"></div>
+  <div class="splash-inner">
+    <div class="logo-ring">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#5b8cff" stroke-width="1" stroke-dasharray="8 6"/></svg>
+      <div class="core"><span>星</span></div>
+    </div>
+    <div class="splash-title">星域游戏平台</div>
+    <div class="splash-sub">GALAXYPLAY · 探索你的游戏宇宙</div>
+    <div class="splash-bar"><i></i></div>
+  </div>
+</div>
+
+<!-- ========== 主界面 ========== -->
+<div class="view" id="mainView">
+  <div id="topbar">
+    <div class="brand"><div class="b-logo">星</div><span>星域</span></div>
+    <div class="tabs" id="tabs">
+      <div class="tab on" data-tab="store">商店</div>
+      <div class="tab" data-tab="library">我的库</div>
+      <div class="tab" data-tab="community">社区</div>
+      <div class="tab" data-tab="profile">资料</div>
+    </div>
+    <div class="avatar-btn" id="avatarBtn"><span class="no-av">?</span><span class="lvl">Lv.1</span></div>
+  </div>
+  <div id="content"></div>
+</div>
+
+<!-- ========== 登录页 ========== -->
+<div class="view" id="login">
+  <div class="login-scroll">
+    <div class="login-card">
+      <div class="login-logo">星</div>
+      <div class="login-title" id="loginTitle">登录星域平台</div>
+      <div class="login-sub" id="loginSub">用邮箱注册或登录，进入你的游戏宇宙</div>
+      <div id="loginForm">
+        <div class="field">
+          <label>邮箱（QQ邮箱 / 任意邮箱）</label>
+          <div class="inp"><span class="ic">@</span><input type="email" id="mailInp" placeholder="例如 123456@qq.com" inputmode="email"></div>
+        </div>
+        <div class="code-row">
+          <div class="field" style="flex:1">
+            <label>验证码</label>
+            <div class="inp"><span class="ic">◆</span><input type="text" id="codeInp" placeholder="6位验证码" inputmode="numeric" maxlength="6"></div>
+          </div>
+          <button class="btn-send" id="sendBtn" style="align-self:flex-end;height:46px">获取验证码</button>
+        </div>
+        <div class="field hidden" id="nickField">
+          <label>昵称（首次注册时设置）</label>
+          <div class="inp"><span class="ic">名</span><input type="text" id="nickInp" placeholder="你的昵称" maxlength="16"></div>
+        </div>
+        <div class="remember-line"><input type="checkbox" id="rememberChk" checked><span>记住此设备，下次自动登录</span></div>
+        <div class="login-err" id="loginErr"></div>
+        <button class="btn-primary" id="loginBtn">登录 / 注册</button>
+        <button class="btn-ghost" id="visitorBtn">暂不登录，随便逛逛</button>
+      </div>
+      <div class="login-hint">· 发送的验证码将进入你填写的邮箱收件箱<br>· 首次登录自动注册，下次再登录会自动识别这个邮箱</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 游戏容器 ========== -->
+<div class="view" id="gameView">
+  <div id="gameHeader">
+    <button class="back" id="gameBack">‹</button>
+    <div class="gt" id="gameTitle">游戏</div>
+    <div style="width:28px"></div>
+  </div>
+  <div id="gameCanvasWrap"><canvas id="gameCanvas"></canvas></div>
+</div>
+
+<!-- ========== 验证码弹层 ========== -->
+<div id="codeModal">
+  <div class="modal">
+    <h3>📮 验证码已发送</h3>
+    <p id="codeMailHint">请打开你的邮箱查收验证码，然后输入到登录页。</p>
+    <div class="code-display" id="codeDisplay">000000</div>
+    <p style="font-size:11px;color:var(--sub)" id="codeNote">（演示模式：上方即为本次验证码，可手动填入）</p>
+    <button class="btn-primary" id="codeOk">我已收到，去填写</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   星域游戏平台 · GalaxyPlay
+   完全原创 · 数据保存在本地（localStorage），支持导出备份到GitHub
+   ============================================================ */
+
+/* ---------- 基础工具 ---------- */
+const $=id=>document.getElementById(id);
+const LS_G='galaxyplay_data_v1';
+let DB=loadDB();
+function loadDB(){
+  try{const raw=localStorage.getItem(LS_G);if(raw)return JSON.parse(raw)}catch(e){}
+  return seed();
+}
+function saveDB(){try{localStorage.setItem(LS_G,JSON.stringify(DB))}catch(e){toast('保存失败：存储空间不足');}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+/* ---------- 初始数据 ---------- */
+function seed(){
+  const t=new Date().getTime();
+  return {
+    users:{},
+    session:null,
+    submissions:[],   // 玩家上架的游戏（待审核/已通过/已拒绝）
+    reviews:[],       // 评测
+    discussions:[],   // 社区讨论
+    library:{},       // email -> 拥有的游戏id[]
+    wishlist:{},      // email -> gameId[]
+    stats:{},         // email -> 游玩统计
+    achievements:{},  // email -> 解锁的成就id[]
+    friends:{},       // email -> 好友名[]
+    chat:{},          // email -> 收到的消息
+    games:seedGames(),
+    news:seedNews()
+  };
+}
+
+function seedGames(){
+  return [
+    {id:'g1',name:'星火防线',genre:'射击',tags:'射击/动作',thumb:'🔥',bg:grad('shoot'),desc:'故事：2050年，外星机械大军入侵地球，你是最后一名星火战士。驾驶战机迎战一波波机械潮，守护人类最后的城市。',version:'1.0',author:'星域工作室',submitted:true,rating:4.8,plays:0},
+    {id:'g2',name:'极速狂飙',genre:'跑酷',tags:'竞速/跑酷',thumb:'🏎️',bg:grad('race'),desc:'故事：未来的霓虹都市，你驾驶光子赛车冲过重重障碍，收集能量币，挑战极限速度。',version:'1.0',author:'星域工作室',submitted:true,rating:4.6,plays:0},
+    {id:'g3',name:'星际拾荒者',genre:'冒险',tags:'冒险/剧情',thumb:'🚀',bg:grad('adv'),desc:'故事：一颗荒芜星球上，你驾驶飞船拾荒，在黑暗中寻找失落的信号源，揭开星球的秘密……',version:'1.0',author:'星域工作室',submitted:true,rating:4.7,plays:0},
+    {id:'g4',name:'星域农场',genre:'养成',tags:'模拟/养成',thumb:'🌾',bg:grad('sim'),desc:'在浩瀚星海中的小星球上开垦农场，种下星尘种子，喂养你的星际宠物，让它慢慢长大。',version:'1.0',author:'星域工作室',submitted:true,rating:4.5,plays:0}
+  ];
+}
+function grad(kind){
+  const m={shoot:'linear-gradient(135deg,#2a1b4a,#5b0f2f 55%,#0a1220)',race:'linear-gradient(135deg,#0d2a4a,#5b1b6b 55%,#0a1220)',adv:'linear-gradient(135deg,#1a2f3a,#12344f 55%,#05070c)',sim:'linear-gradient(135deg,#14472f,#1b3f6b 55%,#0a1220)',upload:'linear-gradient(135deg,#1d1733,#16213a 60%,#0b0e14)'};
+  return m[kind]||m.shoot;
+}
+function seedNews(){
+  return [
+    {id:'n1',title:'星域平台正式上线！多款原创游戏等你来玩',date:'2026-10-06',tag:'公告',icon:'🎉'},
+    {id:'n2',title:'玩家创意工坊开启：现在你可以上架自己的游戏',date:'2026-10-06',tag:'更新',icon:'🛠️'},
+    {id:'n3',title:'《星火防线》限时活动：双倍星尘奖励',date:'2026-10-06',tag:'活动',icon:'⚡'}
+  ];
+}
+
+/* ---------- 会话 ---------- */
+const cur=()=>DB.session?DB.users[DB.session]:null;
+function isLogged(){return !!DB.session}
+
+/* ---------- 导航 ---------- */
+const VIEWS={splash:$('splash'),main:$('mainView'),login:$('login'),game:$('gameView')};
+function show(name){Object.values(VIEWS).forEach(v=>v.classList.remove('active'));VIEWS[name].classList.add('active')}
+let curTab='store';
+function setTab(t){
+  curTab=t;
+  document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('on',el.dataset.tab===t));
+  renderMain();
+}
+
+/* ---------- 顶栏头像 ---------- */
+function renderAvatar(){
+  const b=$('avatarBtn');
+  const u=cur();
+  if(u){
+    b.innerHTML='';
+    if(u.avatar) b.innerHTML='<img src="'+u.avatar+'"><span class="lvl">Lv.'+u.level+'</span>';
+    else b.innerHTML='<span class="no-av" style="font-size:18px">'+esc((u.nick||'?').slice(0,1))+'</span><span class="lvl">Lv.'+u.level+'</span>';
+  }else{
+    b.innerHTML='<span class="no-av" style="font-size:16px">?</span>';
+  }
+}
+$('avatarBtn').onclick=()=>{ if(cur())setTab('profile');else openLogin() };
+
+/* ---------- 登录流程 ---------- */
+let pendingCode=null;
+function openLogin(){ show('login'); clearErr(); }
+
+function clearErr(){$('loginErr').textContent='';}
+function setErr(m){$('loginErr').textContent=m;}
+
+$('mailInp').addEventListener('input',()=>{
+  const mail=$('mailInp').value.trim().toLowerCase();
+  // 自动识别：这个邮箱是否注册过
+  const known=!!DB.users[mail];
+  $('loginTitle').textContent=known?'欢迎回来':'新朋友';
+  $('loginSub').textContent=known?'检测到该邮箱已注册，验证后即可登录':'输入邮箱获取验证码完成注册';
+  $('nickField').classList.toggle('hidden',known);
+});
+
+$('sendBtn').onclick=()=>{
+  const mail=$('mailInp').value.trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){setErr('请输入正确的邮箱地址，例如 123456@qq.com');return;}
+  pendingCode=String(Math.floor(100000+Math.random()*900000));
+  $('codeDisplay').textContent=pendingCode;
+  $('codeMailHint').textContent='验证码已发送至 '+esc(mail);
+  $('codeNote').textContent='演示模式：上方即本次验证码，请记下并填入登录页（接入真实邮箱后会自动发送）';
+  $('codeModal').classList.add('show');
+  setErr('');
+  let n=60;const btn=$('sendBtn');btn.disabled=true;const iv=setInterval(()=>{n--;btn.textContent=n+'s';if(n<=0){clearInterval(iv);btn.disabled=false;btn.textContent='获取验证码';}},1000);
+};
+$('codeOk').onclick=()=>{$('codeModal').classList.remove('show');$('codeInp').focus();};
+
+$('loginBtn').onclick=()=>{
+  const mail=$('mailInp').value.trim().toLowerCase();
+  const code=$('codeInp').value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){setErr('请输入正确的邮箱地址');return;}
+  if(code.length!==6){setErr('请输入6位验证码');return;}
+  if(code!==pendingCode){setErr('验证码不正确，请重新获取');return;}
+  let u=DB.users[mail];
+  if(!u){
+    const nick=$('nickInp').value.trim()||mail.split('@')[0];
+    u={mail,nick,avatar:null,level:1,xp:0,joined:new Date().toISOString().slice(0,10)};
+    DB.users[mail]=u;
+    if(!DB.admin)DB.admin=mail; // 首位注册账号成为管理员，可审核玩家上架的游戏
+    if(!DB.library[mail])DB.library[mail]=[];
+    if(!DB.wishlist[mail])DB.wishlist[mail]=[];
+    if(!DB.stats[mail])DB.stats[mail]={plays:0,score:0,games:0};
+    if(!DB.achievements[mail])DB.achievements[mail]=[];
+    toast('🎉 注册成功，欢迎来到星域！');
+  }else{
+    toast('✅ 登录成功，欢迎回来，'+u.nick+'！');
+  }
+  DB.session=mail;
+  saveDB();
+  enterMain();
+};
+$('visitorBtn').onclick=()=>{show('main');renderMain();toast('以游客身份浏览，登录后才能上架游戏哦');};
+function enterMain(){ show('main'); setTab('store'); renderAvatar(); }
+function logout(){DB.session=null;saveDB();renderAvatar();toast('已退出登录');openLogin();}
+
+/* ---------- 主界面渲染 ---------- */
+function renderMain(){
+  const c=$('content');const u=cur();
+  let h='';
+  if(curTab==='store') h=renderStore(u);
+  else if(curTab==='library') h=renderLibrary(u);
+  else if(curTab==='community') h=renderCommunity(u);
+  else h=renderProfile(u);
+  c.innerHTML=h;
+  bindMain();
+}
+
+/* ---- 商店 ---- */
+function renderStore(u){
+  const owned=u?DB.library[u.mail]||[]:[];
+  const feat=DB.games.slice(0,4);
+  let h='';
+  h+='<div class="hero" data-play="'+feat[0].id+'"><div class="bg" style="background:'+feat[0].bg+'"></div>';
+  h+='<div class="veil"><h2>'+esc(feat[0].name)+'</h2><p>'+esc(feat[0].desc.slice(0,44))+'…</p></div>';
+  h+='<div class="play">▶ 立即游玩</div></div>';
+  h+='<div class="section-title">🎮 精选游戏 <span class="more" onclick="scrollTop(this)"></span></div>';
+  h+='<div class="grid">';
+  DB.games.forEach(g=>{
+    const has=owned.includes(g.id);
+    h+='<div class="gcard" data-play="'+g.id+'"><div class="gthumb" style="background:'+g.bg+'"><span class="gtxt">'+g.thumb+'</span><span class="badge">'+esc(g.genre)+'</span></div>';
+    h+='<div class="ginfo"><div class="gname">'+esc(g.name)+'</div><div class="gmeta"><span>★'+g.rating+'</span><span>'+g.plays+'玩</span></div></div>';
+    if(u)h+='<div class="wish '+(DB.wishlist[u.mail].includes(g.id)?'on':'')+'" data-wish="'+g.id+'">'+(DB.wishlist[u.mail].includes(g.id)?'♥':'♡')+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // 玩家上架区
+  h+='<div class="section-title">🛠️ 玩家创意工坊 <span class="more">'+DB.submissions.filter(s=>s.status==='approved').length+' 款已上架</span></div>';
+  h+='<div class="upload-banner" id="uploadBtn"><div class="ic">📤</div><div><b>上架你的游戏</b><br><span>像 Steam 创意工坊一样，玩家也能提交自己的游戏，审核通过后全平台可见</span></div></div>';
+  const approved=DB.submissions.filter(s=>s.status==='approved');
+  if(approved.length){
+    h+='<div class="grid">';
+    approved.forEach(s=>{
+      h+='<div class="gcard" data-play="'+s.id+'"><div class="gthumb" style="background:'+grad('upload')+'"><span class="gtxt">'+esc(s.icon||'🎲')+'</span><span class="badge">玩家</span></div>';
+      h+='<div class="ginfo"><div class="gname">'+esc(s.name)+'</div><div class="gmeta"><span>by '+esc(s.author)+'</span></div></div></div>';
+    });
+    h+='</div>';
+  }else{
+    h+='<div class="empty">还没有玩家上架游戏，做第一个吧！</div>';
+  }
+
+  // 分类浏览
+  h+='<div class="section-title">🏷️ 按类型逛</div><div class="chips" id="genreChips">';
+  ['全部','射击','跑酷','冒险','养成'].forEach((t,i)=>{h+='<div class="chip '+(i===0?'on':'')+'" data-g="'+t+'">'+t+'</div>'});
+  h+='</div><div id="filterGrid"></div>';
+
+  // 新闻
+  h+='<div class="section-title">📰 平台动态</div>';
+  DB.news.forEach(n=>{
+    h+='<div class="review" style="cursor:pointer" data-news="'+n.id+'"><div class="rv-top"><span>'+n.icon+'</span><span class="rv-user">'+esc(n.title)+'</span><span class="rv-game">'+esc(n.tag)+'</span></div><p>'+esc(n.date)+'</p></div>';
+  });
+  return h;
+}
+
+/* ---- 我的库 ---- */
+function renderLibrary(u){
+  let h='<div class="section-title">🎮 我的游戏库 <span class="more">'+ (u?DB.library[u.mail].length:0)+' 款</span></div>';
+  if(!u){h+='<div class="upload-banner" onclick="openLogin()"><div class="ic">🔐</div><div><b>登录后管理你的游戏库</b><br><span>记录你的游玩进度、成就和收藏</span></div></div>';return h;}
+  const owned=DB.library[u.mail]||[];
+  const games=[...DB.games,...DB.submissions.filter(s=>s.status==='approved'&&owned.includes(s.id))].filter(g=>owned.includes(g.id));
+  if(!games.length){
+    h+='<div class="empty">你的库里还没有游戏，去商店选一款吧！</div>';
+    h+='<button class="btn-primary" onclick="setTab(\'store\')">去商店逛逛</button>';
+    return h;
+  }
+  h+='<div class="grid">';
+  games.forEach(g=>{
+    h+='<div class="gcard" data-play="'+g.id+'"><div class="gthumb" style="background:'+(g.bg||grad('upload'))+'"><span class="gtxt">'+(g.thumb||g.icon||'🎲')+'</span></div>';
+    h+='<div class="ginfo"><div class="gname">'+esc(g.name)+'</div><div class="gmeta"><span>★'+g.rating+'</span><span style="color:var(--grn)">可游玩</span></div></div></div>';
+  });
+  h+='</div>';
+  h+='<div class="section-title">⏱️ 最近游玩</div>';
+  const st=DB.stats[u.mail]||{};
+  if(st.plays){h+='<div class="stat-grid"><div class="stat"><b>'+st.plays+'</b><span>总游玩次数</span></div><div class="stat"><b>'+st.score+'</b><span>累计得分</span></div><div class="stat"><b>'+games.length+'</b><span>游戏数量</span></div></div>';}
+  return h;
+}
+
+/* ---- 社区 ---- */
+function renderCommunity(u){
+  let h='<div class="section-title">💬 社区评测 <span class="more">'+DB.reviews.length+' 条</span></div>';
+  const gnames=id=>{const g=DB.games.find(x=>x.id===id);return g?g.name:'玩家游戏';};
+  if(!DB.reviews.length)h+='<div class="empty">还没有评测，去玩一款游戏并写个评测吧！</div>';
+  DB.reviews.slice().reverse().slice(0,20).forEach(r=>{
+    h+='<div class="review"><div class="rv-top"><span class="fav">'+(r.avatar?r.avatar:'🙂')+'</span><span class="rv-user">'+esc(r.nick)+'</span><span class="stars">'+'★'.repeat(r.stars)+'</span><span class="rv-game">'+esc(gnames(r.game))+'</span></div><p>'+esc(r.text)+'</p></div>';
+  });
+  if(u){
+    h+='<div class="form-card"><b>写一条评测</b>';
+    h+='<div class="field" style="margin-top:10px"><label>评分</label><div class="chips" id="starChips">'+[1,2,3,4,5].map(s=>'<div class="chip" data-s="'+s+'">'+s+'★</div>').join('')+'</div></div>';
+    h+='<div class="field"><label>选游戏</label><select id="rvGame">'+[...DB.games,...DB.submissions.filter(s=>s.status==='approved')].map(g=>'<option value="'+g.id+'">'+esc(g.name)+'</option>').join('')+'</select></div>';
+    h+='<div class="field"><label>内容</label><textarea id="rvText" rows="3" placeholder="说说这款游戏怎么样…"></textarea></div>';
+    h+='<button class="btn-primary" id="rvSubmit">发布评测</button></div>';
+  }
+  h+='<div class="section-title" style="margin-top:20px">🎙️ 平台讨论</div>';
+  DB.discussions.slice().reverse().slice(0,10).forEach(d=>{
+    h+='<div class="review"><div class="rv-top"><span class="fav">'+(d.avatar||'💬')+'</span><span class="rv-user">'+esc(d.nick)+'</span><span class="rv-game">'+esc(d.topic)+'</span></div><p>'+esc(d.text)+'</p></div>';
+  });
+  return h;
+}
+
+/* ---- 个人资料 ---- */
+function renderProfile(u){
+  if(!u){
+    let h='<div class="section-title">👤 个人资料</div>';
+    h+='<div class="upload-banner" onclick="openLogin()"><div class="ic">🔐</div><div><b>登录后查看你的资料、成就和好友</b><br><span>游客模式无法保存进度</span></div></div>';
+    h+='<button class="btn-primary" onclick="openLogin()" style="margin-top:8px">立即登录</button>';
+    return h;
+  }
+  const st=DB.stats[u.mail]||{plays:0,score:0,games:0};
+  const xpNeeded=u.level*200;
+  let h='<div class="profile-head"><div class="profile-av">'+(u.avatar?'<img src="'+u.avatar+'">':'<span class="no-av" style="font-size:26px">'+esc(u.nick.slice(0,1))+'</span>')+'</div>';
+  h+='<div style="flex:1"><div style="font-weight:800;font-size:18px">'+esc(u.nick)+'</div><div style="color:var(--sub);font-size:12px">'+esc(u.mail)+' · 加入于 '+u.joined+'</div>';
+  h+='<div class="xp-bar"><i style="width:'+Math.min(100,Math.round(u.xp/xpNeeded*100))+'%"></i></div><div style="font-size:11px;color:var(--sub);margin-top:4px">Lv.'+u.level+' · '+u.xp+'/'+xpNeeded+' 星尘经验</div></div></div>';
+  h+='<div class="stat-grid"><div class="stat"><b>'+st.plays+'</b><span>游玩次数</span></div><div class="stat"><b>'+st.score+'</b><span>累计得分</span></div><div class="stat"><b>'+st.games+'</b><span>玩过的游戏</span></div></div>';
+
+  // 成就
+  const allAch=[{id:'a1',name:'初次启航',ic:'🚀',desc:'玩任意一款游戏1次'},{id:'a2',name:'百发百中',ic:'🎯',desc:'《星火防线》累计得分500+'},{id:'a3',name:'闪电车手',ic:'⚡',desc:'《极速狂飙》累计得分300+'},{id:'a4',name:'星海探险家',ic:'🧭',desc:'《星际拾荒者》完成一次冒险'},{id:'a5',name:'丰收达人',ic:'🌱',desc:'《星域农场》收获一次'}];
+  const got=DB.achievements[u.mail]||[];
+  h+='<div class="section-title">🏆 成就 <span class="more">'+got.length+'/'+allAch.length+'</span></div>';
+  allAch.forEach(a=>{
+    const has=got.includes(a.id);
+    h+='<div class="ach-item '+(has?'':'lock')+'"><div class="ic">'+a.ic+'</div><div><b>'+esc(a.name)+'</b><br><span>'+esc(a.desc)+'</span></div>'+(has?'<span class="pct">已解锁</span>':'<span class="pct">未解锁</span>')+'</div>';
+  });
+
+  // 好友
+  h+='<div class="section-title">👥 好友</div>';
+  const f=(DB.friends[u.mail]||[]).slice(0,8);
+  if(!f.length){h+='<div class="empty">还没有好友，去社区认识新朋友吧！</div>';}
+  f.forEach(nm=>{h+='<div class="friend-item"><div class="fav">'+(DB.users[nm]?(DB.users[nm].avatar||'🙂'):'🙂')+'</div><div style="flex:1"><b>'+esc(nm)+'</b><div class="st">● 在线</div></div><button class="pill" onclick="toast(\'已发送私聊请求（演示）\')">私聊</button></div>';});
+
+  // 我的上架
+  h+='<div class="section-title">📦 我上架的游戏</div>';
+  const mine=DB.submissions.filter(s=>s.authorMail===u.mail);
+  if(!mine.length){h+='<div class="empty">你还没有上架过游戏</div>';}
+  mine.forEach(s=>{
+    const stc={pending:'st-pending',approved:'st-approved',rejected:'st-rejected'}[s.status];
+    const stxt={pending:'审核中',approved:'已上架',rejected:'未通过'}[s.status];
+    h+='<div class="review"><div class="rv-top"><span style="font-size:20px">'+(s.icon||'🎲')+'</span><span class="rv-user">'+esc(s.name)+'</span><span class="rv-game"><span class="status-pill '+stc+'">'+stxt+'</span></span></div><p>'+esc(s.desc)+'</p></div>';
+  });
+
+  // 管理员审核（首个注册账号为管理员）
+  if(DB.admin===u.mail){
+    const pend=DB.submissions.filter(s=>s.status==='pending');
+    h+='<div class="section-title">🛂 待审核队列 <span class="more">'+pend.length+' 待审</span></div>';
+    if(!pend.length){h+='<div class="empty">暂无待审核的游戏</div>';}
+    pend.forEach(s=>{
+      h+='<div class="review"><div class="rv-top"><span style="font-size:20px">'+(s.icon||'🎲')+'</span><span class="rv-user">'+esc(s.name)+'</span><span class="rv-game" style="color:var(--gold)">待审核</span></div><p>'+esc(s.desc)+'<br><span style="color:var(--sub)">作者：'+esc(s.author)+'（'+esc(s.authorMail)+'）</span></p>';
+      h+='<div style="display:flex;gap:8px;margin-top:10px"><button class="btn-primary" style="width:auto;padding:9px 18px;font-size:13px" data-ap="'+s.id+'">✓ 通过并上架</button><button class="btn-ghost" style="width:auto;padding:9px 18px;font-size:13px" data-rj="'+s.id+'">✗ 拒绝</button></div></div>';
+    });
+  }
+
+  h+='<button class="btn-ghost" onclick="logout()" style="color:var(--red);border-color:rgba(244,91,107,.4);margin-top:16px">退出登录</button>';
+  return h;
+}
+
+/* ---------- 绑定事件 ---------- */
+function bindMain(){
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));
+  document.querySelectorAll('[data-play]').forEach(el=>el.onclick=e=>{e.stopPropagation();startGame(el.dataset.play)});
+  document.querySelectorAll('[data-wish]').forEach(el=>el.onclick=e=>{e.stopPropagation();toggleWish(el.dataset.wish)});
+  const ub=$('uploadBtn');if(ub)ub.onclick=openSubmit;
+  const chips=document.getElementById('genreChips');
+  if(chips){chips.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{chips.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');renderFiltered(c.dataset.g)});renderFiltered('全部');}
+  // 评测
+  let star=5;const sc=$('starChips');if(sc){sc.querySelectorAll('.chip').forEach(s=>s.onclick=()=>{sc.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));s.classList.add('on');star=+s.dataset.s;});}
+  const rs=$('rvSubmit');if(rs)rs.onclick=()=>{const u=cur();if(!u){toast('请先登录');return;}const text=$('rvText').value.trim();const g=$('rvGame').value;if(!text){toast('写点内容再发布');return;}DB.reviews.push({id:uid(),nick:u.nick,avatar:u.avatar,stars:star,text,game:g,time:Date.now()});saveDB();toast('评测已发布，感谢分享！');setTab('community');};
+  // 管理员审核
+  document.querySelectorAll('[data-ap]').forEach(b=>b.onclick=()=>approve(b.dataset.ap,true));
+  document.querySelectorAll('[data-rj]').forEach(b=>b.onclick=()=>approve(b.dataset.ap,false));
+}
+
+function renderFiltered(g){
+  const box=$('filterGrid');if(!box)return;
+  let list=DB.games;
+  if(g!=='全部')list=list.filter(x=>x.tags.includes(g));
+  let h='<div class="grid">';
+  list.forEach(gm=>{h+='<div class="gcard" data-play="'+gm.id+'"><div class="gthumb" style="background:'+gm.bg+'"><span class="gtxt">'+gm.thumb+'</span></div><div class="ginfo"><div class="gname">'+esc(gm.name)+'</div><div class="gmeta"><span>★'+gm.rating+'</span></div></div></div>';});
+  h+='</div>';
+  box.innerHTML=h;
+  box.querySelectorAll('[data-play]').forEach(el=>el.onclick=()=>startGame(el.dataset.play));
+}
+
+function toggleWish(id){
+  const u=cur();if(!u){toast('登录后才能收藏');return;}
+  const w=DB.wishlist[u.mail];const i=w.indexOf(id);
+  if(i>=0){w.splice(i,1);toast('已取消收藏')}else{w.push(id);toast('已加入愿望单 ♥')}
+  saveDB();renderMain();
+}
+
+function approve(id,ok){
+  const s=DB.submissions.find(x=>x.id===id);if(!s)return;
+  s.status=ok?'approved':'rejected';
+  if(ok){s.approvedAt=Date.now();toast('✅「'+s.name+'」已通过审核，全平台上架！');}
+  else toast('已拒绝「'+s.name+'」的上架申请');
+  saveDB();setTab('profile');
+}
+
+/* ---------- 玩家上架 ---------- */
+let editingIcon='🎲';
+function openSubmit(){
+  const u=cur();if(!u){toast('请先登录');return;}
+  const c=$('content');
+  let h='<div class="section-title">📤 上架你的游戏</div>';
+  h+='<div class="form-card"><b>提交审核（管理员审核通过后全平台可见）</b>';
+  h+='<label>游戏名称</label><input type="text" id="suName" placeholder="你的游戏叫什么？" maxlength="20">';
+  h+='<label>游戏图标</label><div class="avatar-pick" id="suIcons">';
+  ['🎲','🕹️','👾','⚔️','🧩','🏰','🌌','🤖'].forEach(ic=>{h+='<div data-ic="'+ic+'" class="'+(ic==='🎲'?'on':'')+'">'+ic+'</div>'});
+  h+='</div>';
+  h+='<label>类型</label><select id="suGenre"><option>射击</option><option>跑酷</option><option>冒险</option><option>养成</option><option>解谜</option><option>其他</option></select>';
+  h+='<label>简介（审核会看这里）</label><textarea id="suDesc" rows="3" placeholder="介绍一下你的游戏故事和玩法…"></textarea>';
+  h+='<label>游戏描述 / 玩法说明</label><textarea id="suText" rows="3" placeholder="描述游戏的核心玩法"></textarea>';
+  h+='<button class="btn-primary" id="suSubmit" style="margin-top:14px">提交审核</button>';
+  h+='<button class="btn-ghost" onclick="setTab(\'profile\')">返回</button></div>';
+  c.innerHTML=h;
+  c.querySelectorAll('#suIcons div').forEach(d=>d.onclick=()=>{c.querySelectorAll('#suIcons div').forEach(x=>x.classList.remove('on'));d.classList.add('on');editingIcon=d.dataset.ic;});
+  $('suSubmit').onclick=()=>{
+    const name=$('suName').value.trim();const desc=$('suDesc').value.trim();const text=$('suText').value.trim();
+    if(!name||!desc){toast('请填写游戏名称和简介');return;}
+    const u=cur();
+    DB.submissions.push({id:'u'+uid(),name,icon:editingIcon,genre:$('suGenre').value,tags:$('suGenre').value,desc,text,author:u.nick,authorMail:u.mail,status:'pending',rating:0,submitted:true});
+    saveDB();toast('📨 已提交！等待管理员审核');
+    setTab('profile');
+  };
+}
+
+/* ---------- 成就 & 经验 ---------- */
+function grant(u,achId,xp){
+  if(!u)return;
+  const got=DB.achievements[u.mail]||[];if(!got.includes(achId)){got.push(achId);DB.achievements[u.mail]=got;toast('🏆 解锁成就！');}
+  u.xp=(u.xp||0)+xp;
+  while(u.xp>=u.level*200){u.xp-=u.level*200;u.level++;toast('🎉 升级！现在 Lv.'+u.level);}
+  saveDB();renderAvatar();
+}
+function recordPlay(gid,score){
+  const u=cur();if(!u){saveDB();return;}
+  const st=DB.stats[u.mail];st.plays=(st.plays||0)+1;st.score=(st.score||0)+(score||0);
+  const glib=DB.library[u.mail];if(!glib.includes(gid)){glib.push(gid);st.games=glib.length;}
+  saveDB();
+  // 成就判定
+  if(gid==='g1'&&st.score>=500)grant(u,'a2',60);
+  if(gid==='g2'&&st.score>=300)grant(u,'a3',60);
+  if(gid==='g4')grant(u,'a5',40);
+  renderAvatar();
+}
+
+/* ---------- 游戏启动 ---------- */
+const canvas=$('gameCanvas');const ctx=canvas.getContext('2d');
+let gameLoop=null,gameCtx=null;
+function startGame(id){
+  let g=DB.games.find(x=>x.id===id)||DB.submissions.find(s=>s.id===id);
+  if(!g)return;
+  // 若为玩家上架的无内置玩法游戏，显示说明页
+  if(id.startsWith('u')){
+    toast('「'+g.name+'」为玩家上架游戏，暂无内置可玩模块');
+    return;
+  }
+  show('game');$('gameTitle').textContent=g.name;
+  const wrap=$('gameCanvasWrap');
+  canvas.width=wrap.clientWidth*2;canvas.height=wrap.clientHeight*2;
+  canvas.style.width=wrap.clientWidth+'px';canvas.style.height=wrap.clientHeight+'px';
+  const W=wrap.clientWidth*2,H=wrap.clientHeight*2;
+  if(gameLoop){cancelAnimationFrame(gameLoop);gameLoop=null;}
+  const u=cur();
+  // 记录游玩
+  if(u){const st=DB.stats[u.mail];st.plays=(st.plays||0)+1;const glib=DB.library[u.mail];if(!glib.includes(id)){glib.push(id);st.games=glib.length;}saveDB();grant(u,'a1',30);renderAvatar();}
+  if(id==='g1')runShooter(W,H,u);
+  else if(id==='g2')runRacer(W,H,u);
+  else if(id==='g3')runAdventure(W,H,u);
+  else if(id==='g4')runFarm(W,H,u);
+}
+
+$('gameBack').onclick=()=>{if(gameLoop){cancelAnimationFrame(gameLoop);gameLoop=null;}if(window.__gameCleanup){window.__gameCleanup();window.__gameCleanup=null;}show('main');renderMain();};
+
+/* ============ 游戏1：星火防线（射击） ============ */
+function runShooter(W,H,u){
+  const S={p:{x:W/2,y:H-140,r:26,v:9},bullets:[],enemies:[],parts:[],score:0,wave:1,spawn:0,over:false,lives:5,keys:{},t:0};
+  const touched={x:0,y:0,on:false};
+  // 故事开场
+  drawStory('🔥 星火防线','2050年，外星机械大军入侵地球。\n你是最后一名星火战士，守护人类最后的城市。','点击屏幕开始战斗');
+  canvas.onclick=()=>{canvas.onclick=null;S.start=Date.now();loop();};
+  function spawn(){S.spawn--;if(S.spawn<=0&&!S.over){for(let i=0;i<Math.min(2+S.wave,6);i++){S.enemies.push({x:60+Math.random()*(W-120),y:-40,hp:1+S.wave,vy:1+0.4*S.wave,vy0:1+0.4*S.wave,type:Math.random()<0.3?'tank':'grunt'});}S.spawn=90-Math.min(50,S.wave*4);}}
+  function loop(){
+    if(S.over){renderOver('星火防线',S.score);return;}
+    S.t++;S.p.x+=S.keys.left?-S.p.v:S.keys.right?S.p.v:0;S.p.x=Math.max(30,Math.min(W-30,S.p.x));
+    if(S.keys.up)S.p.y-=S.p.v;if(S.keys.down)S.p.y+=S.p.v;S.p.y=Math.max(H*0.4,Math.min(H-60,S.p.y));
+    if(touched.on){S.p.x+= (touched.x-S.p.x)*0.2;S.p.y+=(touched.y-S.p.y)*0.2;}
+    // 自动开火
+    if(S.t%7===0){S.bullets.push({x:S.p.x,y:S.p.y-30,vy:-13});}
+    S.bullets.forEach(b=>b.y+=b.vy);S.bullets=S.bullets.filter(b=>b.y>-30);
+    spawn();
+    S.enemies.forEach(e=>{e.y+=e.vy;e.vy+=e.type==='tank'?0.002:0.001;e.x+=Math.sin(S.t/40+e.hp)*0.6;});
+    // 命中
+    S.bullets.forEach((b,bi)=>{S.enemies.forEach((e,ei)=>{if(Math.hypot(b.x-e.x,b.y-e.y)<e.type==='tank'?24:18){S.bullets.splice(bi,1);e.hp--;burst(e.x,e.y,'#f5c04a',6);if(e.hp<=0){S.score+=e.type==='tank'?40:20;burst(e.x,e.y,e.type==='tank'?'#ff5b6b':'#8f5bff',18);S.enemies.splice(ei,1);}}});});
+    // 撞玩家
+    S.enemies.forEach((e,ei)=>{if(Math.hypot(e.x-S.p.x,e.y-S.p.y)<S.p.r+16){S.lives--;burst(S.p.x,S.p.y,'#ff5b6b',26);S.enemies.splice(ei,1);if(S.lives<=0){S.over=true;recordPlay('g1',S.score);}}});
+    // 到底
+    S.enemies.forEach((e,ei)=>{if(e.y>H+40){S.lives-=2;S.enemies.splice(ei,1);if(S.lives<=0){S.over=true;recordPlay('g1',S.score);}}});
+    S.parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life--});S.parts=S.parts.filter(p=>p.life>0);
+    // 波次
+    if(S.enemies.length===0&&S.spawn<=0){S.wave++;S.spawn=40;toast('⚡ 第 '+S.wave+' 波来袭！');}
+    drawShooter();
+    gameLoop=requestAnimationFrame(loop);
+  }
+  function burst(x,y,c,n){for(let i=0;i<n;i++){const a=Math.random()*6.28,v=1+Math.random()*4;S.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:40,color:c,r:2+Math.random()*3});}}
+  function drawShooter(){
+    ctx.clearRect(0,0,W,H);
+    // 星空背景
+    for(let i=0;i<60;i++){const sy=(i*57+S.t*0.3)%H;ctx.fillStyle='rgba(255,255,255,'+ (0.2+i%5*0.05)+')';ctx.fillRect((i*131)%W,sy,2,2);}
+    // 玩家飞船
+    ctx.save();ctx.translate(S.p.x,S.p.y);
+    ctx.fillStyle='#5b8cff';ctx.beginPath();ctx.moveTo(0,-34);ctx.lineTo(22,18);ctx.lineTo(0,8);ctx.lineTo(-22,18);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(143,91,255,.9)';ctx.beginPath();ctx.moveTo(0,-20);ctx.lineTo(10,8);ctx.lineTo(0,2);ctx.lineTo(-10,8);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#34d399';ctx.beginPath();ctx.arc(0,-8,5,0,6.28);ctx.fill();
+    ctx.restore();
+    // 子弹
+    S.bullets.forEach(b=>{ctx.fillStyle='#8ff';ctx.shadowColor='#5b8cff';ctx.shadowBlur=8;ctx.fillRect(b.x-2,b.y-12,4,14);ctx.shadowBlur=0;});
+    // 敌人
+    S.enemies.forEach(e=>{
+      ctx.save();ctx.translate(e.x,e.y);
+      if(e.type==='tank'){ctx.fillStyle='#ff5b6b';ctx.fillRect(-16,-12,32,24);ctx.fillStyle='#7a0f1f';ctx.fillRect(-20,-4,40,8);}
+      else{ctx.fillStyle='#8f5bff';ctx.beginPath();ctx.moveTo(0,16);ctx.lineTo(-14,-12);ctx.lineTo(0,-6);ctx.lineTo(14,-12);ctx.closePath();ctx.fill();}
+      ctx.fillStyle='#f5c04a';ctx.beginPath();ctx.arc(0,0,5,0,6.28);ctx.fill();
+      ctx.restore();
+    });
+    // 粒子
+    S.parts.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life/40;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill();ctx.globalAlpha=1;});
+    // HUD
+    ctx.fillStyle='#fff';ctx.font='bold 40px sans-serif';ctx.textAlign='left';
+    ctx.fillText('⚡ '+S.score,24,56);
+    ctx.fillStyle='#f45b6b';ctx.font='bold 32px sans-serif';ctx.fillText('♥'.repeat(Math.max(0,S.lives)),24,110);
+    ctx.fillStyle='#8f5bff';ctx.font='bold 26px sans-serif';ctx.textAlign='right';ctx.fillText('第'+S.wave+'波',W-24,48);
+  }
+  const kd=e=>{const k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')S.keys.left=true;if(k==='arrowright'||k==='d')S.keys.right=true;if(k==='arrowup'||k==='w')S.keys.up=true;if(k==='arrowdown'||k==='s')S.keys.down=true;};
+  const ku=e=>{const k=e.key.toLowerCase();S.keys.left=S.keys.right=S.keys.up=S.keys.down=false;};
+  window.addEventListener('keydown',kd);window.addEventListener('keyup',ku);
+  const tStart=e=>{const r=canvas.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX);const y=(e.touches?e.touches[0].clientY:e.clientY);const tx=(x-r.left)*2,ty=(y-r.top)*2;if(!S.over){touched.on=true;touched.x=tx;touched.y=Math.max(H*0.4,Math.min(H-60,ty));}};
+  const tEnd=()=>{touched.on=false};
+  canvas.addEventListener('touchstart',tStart);canvas.addEventListener('touchmove',tStart);canvas.addEventListener('touchend',tEnd);
+  const cleanup=()=>{window.removeEventListener('keydown',kd);window.removeEventListener('keyup',ku);canvas.removeEventListener('touchstart',tStart);canvas.removeEventListener('touchmove',tStart);canvas.removeEventListener('touchend',tEnd);};
+  window.__gameCleanup=cleanup;
+  function renderOver(name,score){
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='rgba(5,8,14,.92)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff';ctx.textAlign='center';
+    ctx.font='bold 80px sans-serif';ctx.fillText(name,W/2,H/2-90);
+    ctx.font='bold 56px sans-serif';ctx.fillStyle='#f5c04a';ctx.fillText('得分 '+score,W/2,H/2);
+    ctx.font='26px sans-serif';ctx.fillStyle='#8b96ad';ctx.fillText('点击「返回」继续探索星域',W/2,H/2+70);
+  }
+}
+function drawStory(t1,t2,t3){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='rgba(5,8,14,.94)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold '+Math.min(70,canvas.width/9)+'px sans-serif';
+  ctx.fillText(t1,canvas.width/2,canvas.height/2-60);
+  ctx.fillStyle='#b9c4d8';ctx.font='28px sans-serif';
+  t2.split('\n').forEach((ln,i)=>ctx.fillText(ln,canvas.width/2,canvas.height/2+10+i*38));
+  ctx.fillStyle='#5b8cff';ctx.font='bold 26px sans-serif';
+  ctx.fillText('▶ '+t3,canvas.width/2,canvas.height/2+90);
+}
+
+/* ============ 游戏2：极速狂飙（跑酷） ============ */
+function runRacer(W,H,u){
+  const S={y:H/2-40,vy:0,score:0,over:false,speed:8,lanes:0,obst:[],coins:[],t:0,start:false};
+  drawStory('🏎️ 极速狂飙','未来霓虹都市，光子赛道上危机四伏。\n左右/上下移动躲避障碍，收集能量币冲刺最高分！','点击开始狂飙');
+  canvas.onclick=()=>{canvas.onclick=null;S.start=true;loop();};
+  const PX=W*0.25; // 赛车固定横坐标
+  function loop(){
+    if(S.over){renderOver('极速狂飙',S.score);return;}
+    S.t++;S.speed=8+Math.min(10,S.score/80);
+    S.y+=S.vy;S.vy*=0.8;S.y=Math.max(H*0.18,Math.min(H*0.82,S.y));
+    if(S.t%24===0&&Math.random()<0.6){S.obst.push({x:W+80,y:H*0.15+Math.random()*H*0.7,w:60,h:60});}
+    if(S.t%30===0){S.coins.push({x:W+80,y:H*0.15+Math.random()*H*0.7});}
+    S.obst.forEach(o=>o.x-=S.speed);S.obst=S.obst.filter(o=>o.x>-80);
+    S.coins.forEach(c=>c.x-=S.speed);S.coins=S.coins.filter(c=>c.x>-40);
+    const py=S.y;
+    S.coins.forEach((c,ci)=>{if(Math.hypot(c.x-PX,c.y-py)<70){S.score+=10;S.coins.splice(ci,1);}});
+    S.obst.forEach((o,oi)=>{if(Math.hypot(o.x+o.w/2-PX,o.y+o.h/2-py)<62){S.over=true;recordPlay('g2',S.score);}});
+    drawRacer();
+    gameLoop=requestAnimationFrame(loop);
+  }
+  function drawRacer(){
+    ctx.clearRect(0,0,W,H);
+    // 霓虹背景
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0d2a4a');g.addColorStop(0.5,'#2a1b6b');g.addColorStop(1,'#0a1220');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // 赛道
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(0,H*0.15,W,H*0.7);
+    for(let i=0;i<12;i++){const lx=(i*100-S.t*3)%(W+200)-100;ctx.strokeStyle='rgba(91,140,255,.5)';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(lx,H*0.15);ctx.lineTo(lx,H*0.85);ctx.stroke();}
+    // 障碍（脉冲方块）
+    S.obst.forEach(o=>{ctx.fillStyle='#f45b6b';ctx.shadowColor='#ff5b6b';ctx.shadowBlur=18;ctx.fillRect(o.x,o.y,o.w,o.h);ctx.shadowBlur=0;ctx.strokeStyle='#ffd7db';ctx.lineWidth=2;ctx.strokeRect(o.x,o.y,o.w,o.h);});
+    // 能量币
+    S.coins.forEach(c=>{ctx.fillStyle='#f5c04a';ctx.shadowColor='#f5c04a';ctx.shadowBlur=16;ctx.beginPath();ctx.arc(c.x,c.y,16,0,6.28);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#3a2c0a';ctx.font='18px sans-serif';ctx.textAlign='center';ctx.fillText('⚡',c.x,c.y+6);});
+    // 赛车
+    ctx.save();ctx.translate(PX,S.y);
+    ctx.fillStyle='#5b8cff';ctx.shadowColor='#5b8cff';ctx.shadowBlur=24;
+    ctx.beginPath();ctx.moveTo(34,0);ctx.lineTo(-26,-20);ctx.lineTo(-26,20);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#34d399';ctx.beginPath();ctx.moveTo(20,0);ctx.lineTo(-12,-12);ctx.lineTo(-12,12);ctx.closePath();ctx.fill();
+    ctx.shadowBlur=0;ctx.restore();
+    // HUD
+    ctx.fillStyle='#fff';ctx.font='bold 40px sans-serif';ctx.textAlign='left';ctx.fillText('⚡ '+S.score,24,56);
+    ctx.fillStyle='#8b96ad';ctx.font='24px sans-serif';ctx.fillText('速度 '+Math.round(S.speed*3),24,96);
+  }
+  const kd=e=>{const k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')S.y+=26;if(k==='arrowright'||k==='d')S.y-=26;if(k==='arrowup'||k==='w')S.y-=26;if(k==='arrowdown'||k==='s')S.y+=26;};
+  window.addEventListener('keydown',kd);
+  const tStart=e=>{const r=canvas.getBoundingClientRect();const ty=(e.touches?e.touches[0].clientY:e.clientY)-r.top;const dy=ty*2;S.y+= (dy-S.y)*0.3;};
+  canvas.addEventListener('touchmove',tStart);canvas.addEventListener('touchstart',tStart);
+  const cleanup=()=>{window.removeEventListener('keydown',kd);canvas.removeEventListener('touchmove',tStart);canvas.removeEventListener('touchstart',tStart);};
+  window.__gameCleanup=cleanup;
+}
+
+/* ============ 游戏3：星际拾荒者（冒险剧情） ============ */
+function runAdventure(W,H,u){
+  let stage=0;const story=['【故事】你降落在荒芜的「回声星球」。','系统提示：检测到未知信号源，前往东侧峡谷。','峡谷深处，你发现一台古老通讯塔。','谜题：输入四位密码解锁（提示：星域首字母 G-P 对应的数字）','密码正确！信号源是一条求救讯息。','你成功解开星球之谜，完成冒险！🎉'];
+  const pad=['G','P','P','G'];const padNum={'G':7,'P':8};
+  let entry=[];let done=false;let win=false;
+  drawStory('🚀 星际拾荒者','欢迎来到回声星球','点击开始冒险');
+  canvas.onclick=()=>{canvas.onclick=null;drawScene()};
+  function go(i){stage=i;drawScene();}
+  function drawScene(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1a2f3a');g.addColorStop(1,'#05070c');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // 星空
+    for(let i=0;i<50;i++){ctx.fillStyle='rgba(255,255,255,'+(i%5*0.1+0.15)+')';ctx.fillRect((i*97)%W,(i*53)%H,2,2);}
+    // 地面
+    ctx.fillStyle='#0d2a24';ctx.fillRect(0,H*0.7,W,H*0.3);
+    // 标题
+    ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 44px sans-serif';ctx.fillText('🚀 星际拾荒者',W/2,H*0.28);
+    // 文本卡
+    ctx.fillStyle='rgba(10,16,26,.88)';roundRect(W*0.06,H*0.4,W*0.88,H*0.3,24);ctx.fill();
+    ctx.fillStyle='#e6ecf7';ctx.font='24px sans-serif';ctx.fillText(story[stage],W/2,H*0.5);
+    if(stage===3){
+      // 输入框
+      ctx.fillStyle='#0e1420';roundRect(W/2-150,H*0.56,300,54,12);ctx.fill();
+      ctx.fillStyle='#f5c04a';ctx.font='bold 36px sans-serif';ctx.fillText(entry.join('')||'· · · ·',W/2,H*0.6);
+    }
+    ctx.fillStyle='#5b8cff';ctx.font='bold 22px sans-serif';
+    if(stage===3)ctx.fillText('点击下方字母：G=7  P=8',W/2,H*0.7);
+    else if(stage<4)ctx.fillText('▶ 点击继续',W/2,H*0.76);
+    else ctx.fillText('▶ 点击继续',W/2,H*0.76);
+  }
+  canvas.onclick=()=>{
+    if(done){return;}
+    if(stage===3){ return; } // 此步用键盘 G / P 输入密码（G=7,P=8）
+    if(stage<4){stage++;drawScene();}
+    if(stage===4&&!win){win=true;recordPlay('g3',0);grant(u,'a4',40);}
+    if(stage===4){stage++;drawScene();}
+  };
+  // 数字键盘（字母输入）
+  const kd=e=>{if(stage!==3)return;const k=e.key.toLowerCase();if(k==='g'||k==='p'){if(entry.length<4)entry.push(k.toUpperCase());}else if(k==='backspace'){entry.pop();}else if(k==='enter'){check();}drawScene();};
+  function check(){const ok=entry.map(x=>padNum[x]).join('')===pad.map(x=>padNum[x]).join('');if(ok){stage=4;win=true;recordPlay('g3',0);grant(u,'a4',40);drawScene();}else{entry=[];toast('密码错误，再试试！');drawScene();}}
+  window.addEventListener('keydown',kd);
+  const cleanup=()=>window.removeEventListener('keydown',kd);
+  window.__gameCleanup=cleanup;
+}
+
+/* ============ 游戏4：星域农场（养成） ============ */
+function runFarm(W,H,u){
+  let planted=false,stage=0,t=0,harvest=false;
+  drawStory('🌾 星域农场','在星海小星球上种下星尘种子，\n等待它发芽、成长、开花、结果……','点击开始种植');
+  canvas.onclick=()=>{canvas.onclick=null;planted=true;loop();};
+  function loop(){
+    t++;if(t%12===0&&stage<3)stage++;
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#14472f');g.addColorStop(1,'#0a2030');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    for(let i=0;i<40;i++){ctx.fillStyle='rgba(255,255,255,'+(i%4*0.08+0.1)+')';ctx.fillRect((i*83)%W,(i*61)%H,2,2);}
+    // 土地
+    ctx.fillStyle='#2a1f12';ctx.fillRect(0,H*0.62,W,H*0.38);
+    ctx.fillStyle='#3a2c1a';for(let i=0;i<6;i++){ctx.fillRect(i*W/6, H*0.62, W/6, H*0.1);}
+    // 植物生长
+    const px=W/2,py=H*0.55;const sizes=[{h:20,c:'#34d399'},{h:50,c:'#4ade80'},{h:90,c:'#a3e635'},{h:130,c:'#f5c04a'}];
+    const s=sizes[Math.min(stage,3)];
+    ctx.fillStyle=s.c;ctx.shadowColor=s.c;ctx.shadowBlur=20;
+    ctx.fillRect(px-8,py-s.h,16,s.h);ctx.shadowBlur=0;
+    ctx.beginPath();ctx.arc(px,py-s.h,22,0,6.28);ctx.fill();
+    if(stage>=3){ctx.fillStyle='#f5c04a';ctx.beginPath();ctx.arc(px-14,py-s.h-10,9,0,6.28);ctx.arc(px+14,py-s.h-8,9,0,6.28);ctx.fill();}
+    // 星际宠物
+    const bx=px+80,by=H*0.68+Math.sin(t/20)*6;
+    ctx.fillStyle='#8f5bff';ctx.shadowColor='#8f5bff';ctx.shadowBlur=16;ctx.beginPath();ctx.arc(bx,by,26,0,6.28);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx-9,by-6,4,0,6.28);ctx.arc(bx+9,by-6,4,0,6.28);ctx.fill();
+    ctx.fillStyle='#f5c04a';ctx.beginPath();ctx.arc(bx-4,by+4,3,0,6.28);ctx.arc(bx+4,by+4,3,0,6.28);ctx.fill();
+    // HUD
+    ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 34px sans-serif';
+    ctx.fillText(['🌰 刚种下','🌱 发芽了','🌿 长高了','🌻 开花结果！'][Math.min(stage,3)],W/2,64);
+    if(stage>=3&&!harvest){ctx.fillStyle='#f5c04a';ctx.font='bold 26px sans-serif';ctx.fillText('点击收获星尘果实！',W/2,H*0.45);}
+    if(harvest){ctx.fillStyle='#f5c04a';ctx.font='bold 30px sans-serif';ctx.fillText('🎉 收获成功！+50 星尘',W/2,H*0.45);}
+    gameLoop=requestAnimationFrame(loop);
+  }
+  canvas.onclick=()=>{if(planted&&stage>=3&&!harvest){harvest=true;recordPlay('g4',50);grant(u,'a5',40);}};
+  const cleanup=()=>{canvas.onclick=null;};
+  window.__gameCleanup=cleanup;
+}
+
+/* ---------- 通用工具 ---------- */
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function renderOver(name,score){
+  ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='rgba(5,8,14,.92)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 70px sans-serif';ctx.fillText(name,canvas.width/2,canvas.height/2-90);
+  ctx.fillStyle='#f5c04a';ctx.font='bold 54px sans-serif';ctx.fillText('得分 '+score,canvas.width/2,canvas.height/2);
+  ctx.fillStyle='#8b96ad';ctx.font='26px sans-serif';ctx.fillText('点击「返回」继续探索星域',canvas.width/2,canvas.height/2+70);
+}
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+
+/* ---------- 启动 ---------- */
+setTimeout(()=>{
+  show('main');
+  setTab('store');
+  renderAvatar();
+  if(DB.session){toast('👋 欢迎回来，'+cur().nick+'！');}
+},2400);
+
+/* 数据导出/备份到GitHub提示 */
+window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='galaxyplay-backup.json';a.click();toast('💾 已导出备份文件（可上传到GitHub保留数据）');}});
+</script>
+</body>
+</html>
